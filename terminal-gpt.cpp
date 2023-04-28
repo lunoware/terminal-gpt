@@ -2,6 +2,8 @@
 #include <iostream>
 #include <curl/curl.h>
 #include <string>
+#include <regex>
+
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -78,6 +80,31 @@ std::string escape_special_chars(std::string str) {
     return res;
 }
 
+std::string un_escape_special_chars(std::string str) {
+    std::string res;
+    for (char c : str) {
+
+        switch (c) {
+            case '\\':
+                res += '\n';
+                break;
+            default:
+                res.push_back(c);
+        }
+    }
+    //return res;
+
+    std::string fixedString = std::regex_replace(str, std::regex(R"(\\n\\n)"), "\n"); 
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\\\n)"), "\n");
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\\n)"), "\n");
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\n)"), "\n"); 
+    fixedString = std::regex_replace(fixedString, std::regex(R"(<br>)"), "\n"); 
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\')"), "\'"); 
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\\\")"), "\""); 
+    fixedString = std::regex_replace(fixedString, std::regex(R"(\\")"), "\""); 
+    return fixedString;
+}
+
 int main(int argc, char *argv[])
 {
   std::string promptAll = "";
@@ -94,7 +121,7 @@ int main(int argc, char *argv[])
 
     std::string r = ask_chat_gpt(escape_special_chars(promptAll));
 
-    std::cout << find_answer(r) << std::endl;
+    std::cout << un_escape_special_chars(find_answer(r)) << std::endl;
   }
   return 0;
 }
